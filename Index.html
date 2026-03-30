@@ -3,495 +3,157 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>StableYield Radar | Oportunidades de EmprÃ©stimo em Stablecoins</title>
-    <!-- TailwindCSS + Font Awesome + Chart.js -->
+    <title>StableYield Radar | Lending + Bridges</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <!-- CustomizaÃ§Ã£o do tema escuro terminal -->
     <style>
-        body {
-            background-color: #0a0c10;
-            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
-        }
-        /* Estilo terminal / institucional */
-        .terminal-card {
-            background: #0f1117;
-            border: 1px solid #1e293b;
-            border-radius: 1rem;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.6);
-        }
-        .badge-green {
-            background: #0b3b2f;
-            color: #2dd4bf;
-            border-left: 3px solid #14b8a6;
-        }
-        .badge-negative {
-            background: #064e3b;
-            color: #a7f3d0;
-            font-weight: bold;
-            font-size: 0.7rem;
-            padding: 0.2rem 0.5rem;
-            border-radius: 999px;
-            white-space: nowrap;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background-color: #0a0c10; font-family: 'Inter', system-ui, sans-serif; }
+        .terminal-card { background: #0f1117; border: 1px solid #1e293b; border-radius: 1rem; box-shadow: 0 8px 16px rgba(0,0,0,0.6); }
+        .badge-negative { background: #064e3b; color: #a7f3d0; font-weight: bold; font-size: 0.7rem; padding: 0.2rem 0.5rem; border-radius: 999px; }
         .risk-low { background-color: #14532d; color: #86efac; }
         .risk-medium { background-color: #854d0e; color: #fde047; }
         .risk-high { background-color: #7f1a1a; color: #fecaca; }
-        .table-row:hover {
-            background-color: #1a1e2a;
-            cursor: pointer;
-            transition: 0.1s;
-        }
-        .modal-bg {
-            background-color: rgba(0,0,0,0.85);
-            backdrop-filter: blur(4px);
-        }
-        /* Scroll suave */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #1e1e2e;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #2dd4bf;
-            border-radius: 8px;
-        }
-        .animate-pulse-slow {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
+        .table-row:hover { background-color: #1a1e2a; cursor: pointer; transition: 0.1s; }
+        .modal-bg { background-color: rgba(0,0,0,0.85); backdrop-filter: blur(4px); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #1e1e2e; }
+        ::-webkit-scrollbar-thumb { background: #2dd4bf; border-radius: 8px; }
+        .tab-active { border-bottom: 2px solid #2dd4bf; color: #2dd4bf; }
+        .tab-inactive { border-bottom: 2px solid transparent; color: #9ca3af; }
+        .hidden { display: none; }
     </style>
 </head>
 <body class="text-gray-200">
-
     <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-6">
-        <!-- HEADER -->
-        <div class="flex flex-wrap justify-between items-center mb-6 border-b border-gray-800 pb-4">
+        <div class="flex flex-wrap justify-between items-center mb-4 border-b border-gray-800 pb-4">
             <div>
                 <h1 class="text-2xl md:text-3xl font-bold tracking-tight bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">StableYield Radar</h1>
-                <p class="text-gray-400 text-sm mt-1">Custo real de capital â€¢ EmprÃ©stimos em stablecoins â€¢ Multichain</p>
+                <p class="text-gray-400 text-sm mt-1">Custo real de capital • Empréstimos, Pontes e Agregadores</p>
             </div>
             <div class="flex gap-3 mt-2 sm:mt-0">
-                <button id="exportCsvBtn" class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2"><i class="fas fa-download"></i> CSV</button>
+                <button id="exportCsvBtn" class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"><i class="fas fa-download"></i> CSV</button>
                 <button id="proModeBtn" class="bg-cyan-950 hover:bg-cyan-900 border border-cyan-700 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"><i class="fas fa-crown text-yellow-500"></i> Modo Pro</button>
             </div>
         </div>
 
-        <!-- FILTERS & SORTING -->
-        <div class="terminal-card p-4 mb-6 grid grid-cols-1 md:grid-cols-5 gap-4">
-            <div>
-                <label class="text-xs uppercase tracking-wider text-gray-400">Rede (multiselect)</label>
-                <select id="filterNetwork" multiple size="2" class="w-full bg-gray-900 border border-gray-700 rounded-md text-sm p-2">
-                    <option value="Ethereum">Ethereum</option><option value="Arbitrum">Arbitrum</option><option value="Optimism">Optimism</option>
-                    <option value="Base">Base</option><option value="Polygon">Polygon</option><option value="BNB Chain">BNB Chain</option>
-                    <option value="Avalanche">Avalanche</option><option value="Solana">Solana</option><option value="X Layer">X Layer</option>
-                </select>
-            </div>
-            <div>
-                <label class="text-xs uppercase tracking-wider text-gray-400">Stablecoin</label>
-                <select id="filterStablecoin" multiple size="2" class="w-full bg-gray-900 border border-gray-700 rounded-md text-sm p-2">
-                    <option value="USDT">USDT</option><option value="USDC">USDC</option><option value="DAI">DAI</option>
-                    <option value="FDUSD">FDUSD</option><option value="USDe">USDe</option><option value="TUSD">TUSD</option>
-                </select>
-            </div>
-            <div class="flex items-center">
-                <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="negativeOnlyFilter" class="w-4 h-4 accent-emerald-500"> <span class="text-gray-300">ðŸ“‰ Apenas Net Borrow Negativo</span></label>
-            </div>
-            <div>
-                <label class="text-xs uppercase tracking-wider text-gray-400">Ordenar por</label>
-                <select id="sortBy" class="w-full bg-gray-900 border border-gray-700 rounded-md text-sm p-2">
-                    <option value="reward">Maior recompensa (Reward APY)</option>
-                    <option value="net" selected>Menor custo real (Net Borrow APY)</option>
-                    <option value="liquidity">Maior liquidez</option>
-                </select>
-            </div>
-            <div class="flex items-end">
-                <button id="refreshNowBtn" class="bg-emerald-800 hover:bg-emerald-700 px-4 py-2 rounded-lg text-sm flex items-center gap-2"><i class="fas fa-sync-alt"></i> Atualizar agora</button>
-            </div>
+        <div class="flex gap-6 border-b border-gray-800 mb-6">
+            <button id="tabLending" class="tab-active pb-2 font-semibold">📊 Lending Radar</button>
+            <button id="TabBridges" class="tab-inactive pb-2 font-semibold">🌉 Pontes & Agregadores</button>
         </div>
 
-        <!-- TABELA PRINCIPAL (scroll horizontal em mobile) -->
-        <div class="terminal-card overflow-x-auto">
-            <table class="w-full text-sm text-left border-collapse">
-                <thead class="bg-gray-900/80 text-gray-300 border-b border-gray-800">
-                    <tr>
-                        <th class="px-4 py-3">Protocolo</th><th class="px-4 py-3">Rede</th><th class="px-4 py-3">Stablecoin</th>
-                        <th class="px-4 py-3">Borrow APY</th><th class="px-4 py-3">Reward APY</th><th class="px-4 py-3">Net Borrow APY</th>
-                        <th class="px-4 py-3">UtilizaÃ§Ã£o</th><th class="px-4 py-3">Liquidez</th><th class="px-4 py-3">Risk Score</th>
-                        <th class="px-4 py-3">AtualizaÃ§Ã£o</th>
-                    </tr>
-                </thead>
-                <tbody id="opportunityTableBody">
-                    <!-- linhas geradas via JS -->
-                    <tr><td colspan="10" class="text-center py-8">Carregando oportunidades...</td></tr>
-                </tbody>
-            </table>
-        </div>
-        <div class="text-xs text-gray-500 mt-3 flex justify-between">
-            <span><i class="fas fa-chart-line"></i> Dados simulados em tempo real (mock) â€¢ AtualizaÃ§Ã£o a cada 30s</span>
-            <span id="lastGlobalUpdate">--:--:--</span>
-        </div>
-    </div>
-
-    <!-- MODAL DETALHES -->
-    <div id="protocolModal" class="fixed inset-0 z-50 hidden items-center justify-center modal-bg transition-all">
-        <div class="bg-gray-900 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-gray-700 shadow-2xl m-4">
-            <div class="sticky top-0 bg-gray-900 border-b border-gray-800 px-6 py-4 flex justify-between items-center">
-                <h2 class="text-xl font-bold text-emerald-300" id="modalTitle">Detalhes do Protocolo</h2>
-                <button id="closeModalBtn" class="text-gray-400 hover:text-white text-2xl">&times;</button>
-            </div>
-            <div class="p-6 space-y-6">
-                <!-- GrÃ¡fico evoluÃ§Ã£o 7 dias -->
+        <div id="lendingSection">
+            <div class="terminal-card p-4 mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
-                    <h3 class="text-md font-semibold text-gray-200 mb-2">ðŸ“ˆ EvoluÃ§Ã£o das taxas (Ãºltimos 7 dias)</h3>
-                    <canvas id="rateChart" width="400" height="200" class="w-full h-auto bg-gray-800 rounded-lg p-2"></canvas>
+                    <label class="text-xs text-gray-400">Rede</label>
+                    <select id="filterNetwork" multiple size="2" class="w-full bg-gray-900 border border-gray-700 rounded-md text-sm p-2">
+                        <option value="Ethereum">Ethereum</option><option value="Arbitrum">Arbitrum</option>
+                        <option value="Optimism">Optimism</option><option value="Base">Base</option>
+                        <option value="Polygon">Polygon</option><option value="BNB Chain">BNB Chain</option>
+                    </select>
                 </div>
-                <div class="grid md:grid-cols-2 gap-4 text-sm">
-                    <div class="space-y-2"><p><span class="text-gray-400">Curva de juros:</span> <span id="curveInfo" class="text-gray-200">Modelo de juros Aave v3 (estÃ¡vel/variÃ¡vel)</span></p>
-                    <p><span class="text-gray-400">Total Supply:</span> <span id="totalSupply" class="font-mono">â€”</span></p>
-                    <p><span class="text-gray-400">Total Borrow:</span> <span id="totalBorrow" class="font-mono">â€”</span></p>
-                    <p><span class="text-gray-400">UtilizaÃ§Ã£o %:</span> <span id="detailUtilization">â€”</span></p></div>
-                    <div class="space-y-2"><p><span class="text-gray-400">Token de recompensa:</span> <span id="rewardToken" class="text-emerald-300 font-medium">â€”</span></p>
-                    <p><span class="text-gray-400">EmissÃ£o diÃ¡ria (aprox):</span> <span id="dailyEmission">â€”</span></p>
-                    <p><span class="text-gray-400">Link direto:</span> <a id="protocolLink" href="#" target="_blank" class="text-cyan-400 underline break-all">Acessar app</a></p>
-                    <p><span class="text-gray-400">Risk Score detalhado:</span> <span id="riskDetail" class="px-2 py-1 rounded text-xs font-bold">â€”</span></p></div>
+                <div>
+                    <label class="text-xs text-gray-400">Stablecoin</label>
+                    <select id="filterStablecoin" multiple size="2" class="w-full bg-gray-900 border border-gray-700 rounded-md text-sm p-2">
+                        <option value="USDT">USDT</option><option value="USDC">USDC</option><option value="DAI">DAI</option>
+                    </select>
                 </div>
+                <div class="flex items-center">
+                    <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="negativeOnlyFilter" class="accent-emerald-500"> Apenas Net Borrow Negativo</label>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-400">Ordenar</label>
+                    <select id="sortBy" class="w-full bg-gray-900 border border-gray-700 rounded-md text-sm p-2">
+                        <option value="reward">Maior recompensa</option>
+                        <option value="net" selected>Menor custo real</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="terminal-card overflow-x-auto">
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-gray-900/80 text-gray-300">
+                        <tr><th class="px-4 py-3">Protocolo</th><th class="px-4 py-3">Rede</th><th class="px-4 py-3">Stable</th>
+                        <th class="px-4 py-3">Borrow</th><th class="px-4 py-3">Reward</th><th class="px-4 py-3">Net APY</th>
+                        <th class="px-4 py-3">Risk</th></tr>
+                    </thead>
+                    <tbody id="opportunityTableBody"><tr><td colspan="7" class="text-center py-8">Carregando...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="bridgesSection" class="hidden">
+            <div class="terminal-card p-4 mb-6">
+                <p class="text-center text-gray-400 py-8">Seção de pontes e agregadores em desenvolvimento</p>
             </div>
         </div>
     </div>
 
-    <!-- TOAST para alertas de oportunidade -->
-    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
+    <div id="protocolModal" class="fixed inset-0 z-50 hidden items-center justify-center modal-bg">
+        <div class="bg-gray-900 rounded-xl max-w-2xl w-full p-6">
+            <div class="flex justify-between mb-4"><h2 id="modalTitle" class="text-xl font-bold text-emerald-300">Detalhes</h2><button id="closeModalBtn" class="text-white text-2xl">&times;</button></div>
+            <canvas id="rateChart" height="200"></canvas>
+            <div class="mt-4" id="modalDetails"></div>
+        </div>
+    </div>
+
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50"></div>
 
     <script>
-        // ------------------- MOCK DATASETS + CONFIG -------------------
-        const PROTOCOLS_META = {
-            "Aave": { tvl: 6500, age: 4.5, audits: true, exploit: false, token: "AAVE", dailyEmi: "$145K", link: "https://app.aave.com" },
-            "Compound": { tvl: 3200, age: 5, audits: true, exploit: false, token: "COMP", dailyEmi: "$82K", link: "https://app.compound.finance" },
-            "Venus": { tvl: 1400, age: 3, audits: true, exploit: false, token: "XVS", dailyEmi: "$110K", link: "https://app.venus.io" },
-            "Radiant": { tvl: 890, age: 2, audits: true, exploit: false, token: "RDNT", dailyEmi: "$67K", link: "https://app.radiant.capital" },
-            "Morpho": { tvl: 2100, age: 2.5, audits: true, exploit: false, token: "MORPHO", dailyEmi: "$34K", link: "https://app.morpho.org" },
-            "Spark": { tvl: 1700, age: 1.8, audits: true, exploit: false, token: "SPK", dailyEmi: "$42K", link: "https://app.spark.fi" },
-            "Euler": { tvl: 450, age: 2.2, audits: true, exploit: true, token: "EUL", dailyEmi: "$18K", link: "https://app.euler.finance" },
-            "Kamino": { tvl: 1100, age: 1.5, audits: true, exploit: false, token: "KMNO", dailyEmi: "$95K", link: "https://app.kamino.finance" },
-            "Drift": { tvl: 950, age: 1.8, audits: true, exploit: false, token: "DRIFT", dailyEmi: "$77K", link: "https://app.drift.trade" }
-        };
+        const PROTOCOLS = ["Aave", "Compound", "Venus", "Morpho"];
+        const NETWORKS = ["Ethereum", "Arbitrum", "Optimism", "Base", "Polygon"];
+        const STABLECOINS = ["USDT", "USDC", "DAI"];
+        let allData = [];
         
-        // Lista de redes e stablecoins suportadas
-        const NETWORKS = ["Ethereum","Arbitrum","Optimism","Base","Polygon","BNB Chain","Avalanche","Solana","X Layer"];
-        const STABLECOINS = ["USDT","USDC","DAI","FDUSD","USDe","TUSD"];
-        
-        // GeraÃ§Ã£o de dados iniciais (mock)
-        let allOpportunities = [];
-        let previousNegativeSet = new Set(); // para alertas de nova oportunidade negativa
-        
-        // Helper: calcular risk score com base no protocolo
-        function getRiskScore(protocol) {
-            const meta = PROTOCOLS_META[protocol] || { tvl: 200, age: 0.5, audits: false, exploit: false };
-            let score = "MÃ©dio";
-            if (meta.tvl > 500 && meta.age > 2 && meta.audits && !meta.exploit) score = "Baixo";
-            else if (meta.tvl < 100 || meta.age < 1 || meta.exploit) score = "Alto";
-            else score = "MÃ©dio";
-            return score;
-        }
-        
-        function getRiskClass(score) {
-            if(score === "Baixo") return "risk-low";
-            if(score === "Alto") return "risk-high";
-            return "risk-medium";
-        }
-        
-        // Gera um nÃºmero randÃ´mico realista para APY
-        function randomBorrowApy() { return (Math.random() * 12 + 2).toFixed(2); } // 2% a 14%
-        function randomRewardApy() { return (Math.random() * 8).toFixed(2); } // 0 a 8%
-        function randomUtil() { return (Math.random() * 80 + 10).toFixed(0); }
-        function randomLiquidity() { return (Math.random() * 400 + 10).toFixed(0); } // milhÃµes USD
-        
-        // Gerar mock completo
-        function generateMockData() {
-            const newData = [];
-            for(let p of Object.keys(PROTOCOLS_META)) {
-                for(let net of NETWORKS.slice(0,6)) { // limitamos variedade para performance visual, mas mantemos vÃ¡rias combinaÃ§Ãµes
-                    for(let stable of STABLECOINS.slice(0,4)) { 
-                        if(Math.random() > 0.45) continue; // diversidade
-                        const borrow = parseFloat(randomBorrowApy());
-                        const reward = parseFloat(randomRewardApy());
-                        const netBorrow = borrow - reward;
-                        const utilization = randomUtil();
-                        const liquidityM = randomLiquidity();
-                        const risk = getRiskScore(p);
-                        const lastUpdate = new Date().toLocaleTimeString();
-                        newData.push({
-                            protocol: p, network: net, stablecoin: stable,
-                            borrowApy: borrow, rewardApy: reward, netBorrowApy: netBorrow,
-                            utilization: utilization + "%", liquidity: `$${liquidityM}M`,
-                            riskScore: risk, lastUpdate: lastUpdate,
-                            // detalhes adicionais
-                            totalSupply: `$${(Math.random() * 800 + 50).toFixed(0)}M`,
-                            totalBorrow: `$${(Math.random() * 400 + 20).toFixed(0)}M`,
-                            rewardToken: PROTOCOLS_META[p]?.token || "TOKEN",
-                            dailyEmission: PROTOCOLS_META[p]?.dailyEmi || "$20K",
-                            link: PROTOCOLS_META[p]?.link || "#"
-                        });
+        function generateData() {
+            const data = [];
+            for(let p of PROTOCOLS) {
+                for(let net of NETWORKS) {
+                    for(let stable of STABLECOINS) {
+                        if(Math.random() > 0.5) continue;
+                        const borrow = (Math.random() * 12 + 2).toFixed(2);
+                        const reward = (Math.random() * 8).toFixed(2);
+                        const net = (borrow - reward).toFixed(2);
+                        data.push({ protocol: p, network: net, stablecoin: stable, borrowApy: parseFloat(borrow), rewardApy: parseFloat(reward), netBorrowApy: parseFloat(net), riskScore: Math.random() > 0.7 ? "Alto" : (Math.random() > 0.5 ? "Médio" : "Baixo") });
                     }
                 }
             }
-            // Adiciona algumas oportunidades em Solana e X Layer
-            for(let p of ["Kamino","Drift"]) {
-                for(let net of ["Solana","X Layer"]) {
-                    for(let stable of ["USDC","USDT"]) {
-                        const borrow = parseFloat(randomBorrowApy());
-                        const reward = parseFloat(randomRewardApy());
-                        const netBorrow = borrow - reward;
-                        newData.push({
-                            protocol: p, network: net, stablecoin: stable,
-                            borrowApy: borrow, rewardApy: reward, netBorrowApy: netBorrow,
-                            utilization: randomUtil()+"%", liquidity: `$${randomLiquidity()}M`,
-                            riskScore: getRiskScore(p), lastUpdate: new Date().toLocaleTimeString(),
-                            totalSupply: `$${(Math.random() * 300 + 30).toFixed(0)}M`,
-                            totalBorrow: `$${(Math.random() * 150 + 10).toFixed(0)}M`,
-                            rewardToken: PROTOCOLS_META[p]?.token, dailyEmission: PROTOCOLS_META[p]?.dailyEmi,
-                            link: PROTOCOLS_META[p]?.link
-                        });
-                    }
-                }
-            }
-            return newData;
-        }
-        
-        // Atualizar dados com pequenas variaÃ§Ãµes (simula tempo real)
-        function mutateData() {
-            allOpportunities = allOpportunities.map(item => {
-                let newBorrow = item.borrowApy + (Math.random() - 0.5) * 1.2;
-                newBorrow = Math.min(Math.max(newBorrow, 0.5), 20);
-                let newReward = item.rewardApy + (Math.random() - 0.5) * 1.0;
-                newReward = Math.min(Math.max(newReward, 0), 12);
-                let newNet = newBorrow - newReward;
-                let newUtil = parseFloat(item.utilization) + (Math.random() - 0.5) * 5;
-                newUtil = Math.min(Math.max(newUtil, 5), 98).toFixed(0)+"%";
-                let newLiq = parseFloat(item.liquidity.replace('$','').replace('M','')) + (Math.random() - 0.5)*15;
-                newLiq = Math.max(5, newLiq).toFixed(0)+"M";
-                return {
-                    ...item,
-                    borrowApy: parseFloat(newBorrow.toFixed(2)),
-                    rewardApy: parseFloat(newReward.toFixed(2)),
-                    netBorrowApy: parseFloat(newNet.toFixed(2)),
-                    utilization: newUtil,
-                    liquidity: `$${newLiq}`,
-                    lastUpdate: new Date().toLocaleTimeString()
-                };
-            });
-            checkForNewNegativeOpportunities();
-            renderTable();
-            document.getElementById("lastGlobalUpdate").innerText = `Ãšltima atualizaÃ§Ã£o: ${new Date().toLocaleTimeString()}`;
-        }
-        
-        // Verifica oportunidades que ficaram negativas e emite alerta
-        let lastNegativeKeys = new Set();
-        function checkForNewNegativeOpportunities() {
-            const currentNegative = new Set();
-            allOpportunities.forEach(opp => {
-                if(opp.netBorrowApy < 0) {
-                    const key = `${opp.protocol}-${opp.network}-${opp.stablecoin}`;
-                    currentNegative.add(key);
-                    if(!lastNegativeKeys.has(key)) {
-                        showToast(`ðŸ”¥ NOVA OPORTUNIDADE: ${opp.protocol} (${opp.network}) ${opp.stablecoin} | Net Borrow ${opp.netBorrowApy.toFixed(2)}%`, "success");
-                    }
-                }
-            });
-            lastNegativeKeys = currentNegative;
-        }
-        
-        function showToast(msg, type="info") {
-            const toast = document.createElement("div");
-            toast.className = `bg-gray-800 border-l-4 ${type==="success" ? "border-emerald-400" : "border-cyan-400"} rounded-md shadow-lg p-3 max-w-sm text-sm animate-pulse-slow`;
-            toast.innerHTML = `<i class="fas fa-bell mr-2 text-emerald-300"></i>${msg}`;
-            const container = document.getElementById("toastContainer");
-            container.appendChild(toast);
-            setTimeout(() => { toast.remove(); }, 5000);
-            // Solicita permissÃ£o de notificaÃ§Ã£o se suportado
-            if(Notification.permission === "granted" && type==="success") {
-                new Notification("StableYield Radar", { body: msg });
-            }
-        }
-        
-        // FILTROS E ORDENAÃ‡ÃƒO
-        let currentFilters = { networks: [], stablecoins: [], negativeOnly: false };
-        let currentSort = "net";
-        
-        function applyFiltersAndSort() {
-            let filtered = [...allOpportunities];
-            // rede
-            if(currentFilters.networks.length > 0) {
-                filtered = filtered.filter(opp => currentFilters.networks.includes(opp.network));
-            }
-            if(currentFilters.stablecoins.length > 0) {
-                filtered = filtered.filter(opp => currentFilters.stablecoins.includes(opp.stablecoin));
-            }
-            if(currentFilters.negativeOnly) {
-                filtered = filtered.filter(opp => opp.netBorrowApy < 0);
-            }
-            // ordenaÃ§Ã£o
-            if(currentSort === "reward") {
-                filtered.sort((a,b) => b.rewardApy - a.rewardApy);
-            } else if(currentSort === "net") {
-                filtered.sort((a,b) => a.netBorrowApy - b.netBorrowApy);
-            } else if(currentSort === "liquidity") {
-                filtered.sort((a,b) => parseFloat(b.liquidity.replace('$','').replace('M','')) - parseFloat(a.liquidity.replace('$','').replace('M','')));
-            }
-            return filtered;
+            return data;
         }
         
         function renderTable() {
             const tbody = document.getElementById("opportunityTableBody");
-            const dataFiltered = applyFiltersAndSort();
-            if(dataFiltered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="10" class="text-center py-8 text-gray-400">Nenhuma oportunidade encontrada com os filtros atuais.</td></tr>`;
-                return;
-            }
-            tbody.innerHTML = dataFiltered.map(opp => {
-                const isNegative = opp.netBorrowApy < 0;
-                const netDisplay = `${opp.netBorrowApy.toFixed(2)}%`;
-                const badge = isNegative ? `<span class="badge-negative ml-2"><i class="fas fa-hand-holding-usd"></i> VOCÃŠ RECEBE PARA PEGAR EMPRESTADO</span>` : "";
-                const riskClass = getRiskClass(opp.riskScore);
-                return `<tr class="table-row border-b border-gray-800/60" data-protocol='${JSON.stringify(opp)}'>
-                            <td class="px-4 py-3 font-medium text-cyan-300">${opp.protocol}</td>
-                            <td class="px-4 py-3">${opp.network}</td>
-                            <td class="px-4 py-3">${opp.stablecoin}</td>
-                            <td class="px-4 py-3 ${opp.borrowApy > 8 ? 'text-red-400' : 'text-gray-200'}">${opp.borrowApy}%</td>
-                            <td class="px-4 py-3 text-green-300">+${opp.rewardApy}%</td>
-                            <td class="px-4 py-3 font-mono ${isNegative ? 'text-emerald-400 font-bold' : 'text-yellow-300'}">${netDisplay} ${badge}</td>
-                            <td class="px-4 py-3">${opp.utilization}</td>
-                            <td class="px-4 py-3">${opp.liquidity}</td>
-                            <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-xs font-bold ${riskClass}">${opp.riskScore}</span></td>
-                            <td class="px-4 py-3 text-gray-400 text-xs">${opp.lastUpdate}</td>
-                        </tr>`;
-            }).join("");
-            // Evento clique nas linhas (detalhes)
-            document.querySelectorAll("#opportunityTableBody tr").forEach(row => {
-                row.addEventListener("click", (e) => {
-                    const dataAttr = row.getAttribute("data-protocol");
-                    if(dataAttr) {
-                        const opp = JSON.parse(dataAttr);
-                        openModal(opp);
-                    }
-                });
+            const negativeOnly = document.getElementById("negativeOnlyFilter").checked;
+            let filtered = [...allData];
+            if(negativeOnly) filtered = filtered.filter(o => o.netBorrowApy < 0);
+            if(filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8">Nenhuma oportunidade</td></tr>'; return; }
+            tbody.innerHTML = filtered.map(opp => `<tr class="table-row border-b border-gray-800/60" data-protocol='${JSON.stringify(opp)}'>
+                <td class="px-4 py-3 text-cyan-300">${opp.protocol}</td>
+                <td class="px-4 py-3">${opp.network}</td>
+                <td class="px-4 py-3">${opp.stablecoin}</td>
+                <td class="px-4 py-3">${opp.borrowApy}%</td>
+                <td class="px-4 py-3 text-green-300">+${opp.rewardApy}%</td>
+                <td class="px-4 py-3 ${opp.netBorrowApy < 0 ? 'text-emerald-400 font-bold' : 'text-yellow-300'}">${opp.netBorrowApy}%</td>
+                <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-xs font-bold risk-${opp.riskScore === 'Baixo' ? 'low' : (opp.riskScore === 'Médio' ? 'medium' : 'high')}">${opp.riskScore}</span></td>
+            </tr>`).join("");
+            document.querySelectorAll(".table-row").forEach(row => {
+                row.addEventListener("click", () => { alert("Detalhes do protocolo (demo)"); });
             });
         }
         
-        // MODAL com grÃ¡fico e dados
-        let chartInstance = null;
-        function openModal(opp) {
-            document.getElementById("modalTitle").innerHTML = `${opp.protocol} â€¢ ${opp.network} â€¢ ${opp.stablecoin}`;
-            document.getElementById("totalSupply").innerText = opp.totalSupply || "N/A";
-            document.getElementById("totalBorrow").innerText = opp.totalBorrow || "N/A";
-            document.getElementById("detailUtilization").innerText = opp.utilization;
-            document.getElementById("rewardToken").innerText = opp.rewardToken;
-            document.getElementById("dailyEmission").innerText = opp.dailyEmission;
-            document.getElementById("protocolLink").href = opp.link;
-            const riskDetailSpan = document.getElementById("riskDetail");
-            riskDetailSpan.innerText = opp.riskScore;
-            riskDetailSpan.className = `px-2 py-1 rounded text-xs font-bold ${getRiskClass(opp.riskScore)}`;
-            document.getElementById("curveInfo").innerHTML = `Modelo de juros baseado na utilizaÃ§Ã£o (${opp.utilization}) â€¢ Curva adaptativa`;
-            
-            // Gerar dados histÃ³ricos mock (Ãºltimos 7 dias)
-            const labels = [];
-            const borrowHistory = [];
-            const rewardHistory = [];
-            let baseBorrow = opp.borrowApy;
-            let baseReward = opp.rewardApy;
-            for(let i=6; i>=0; i--) {
-                const date = new Date();
-                date.setDate(date.getDate() - i);
-                labels.push(date.toLocaleDateString());
-                let variation = (Math.sin(i) * 1.2).toFixed(2);
-                let borrowVal = Math.max(0.5, baseBorrow + parseFloat(variation) - 0.5).toFixed(2);
-                let rewardVal = Math.max(0, baseReward + parseFloat(variation)*0.6).toFixed(2);
-                borrowHistory.push(borrowVal);
-                rewardHistory.push(rewardVal);
-            }
-            const ctx = document.getElementById("rateChart").getContext("2d");
-            if(chartInstance) chartInstance.destroy();
-            chartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        { label: 'Borrow APY %', data: borrowHistory, borderColor: '#f97316', backgroundColor: 'transparent', tension: 0.2 },
-                        { label: 'Reward APY %', data: rewardHistory, borderColor: '#2dd4bf', backgroundColor: 'transparent', tension: 0.2 }
-                    ]
-                },
-                options: { responsive: true, maintainAspectRatio: true, plugins: { tooltip: { mode: 'index' }, legend: { labels: { color: '#ccc' } } } }
-            });
-            document.getElementById("protocolModal").classList.remove("hidden");
-            document.getElementById("protocolModal").classList.add("flex");
-        }
+        allData = generateData();
+        renderTable();
         
-        // Atualiza filtros baseado nos selects
-        function updateFilters() {
-            const networkSelect = document.getElementById("filterNetwork");
-            currentFilters.networks = Array.from(networkSelect.selectedOptions).map(opt => opt.value);
-            const stableSelect = document.getElementById("filterStablecoin");
-            currentFilters.stablecoins = Array.from(stableSelect.selectedOptions).map(opt => opt.value);
-            currentFilters.negativeOnly = document.getElementById("negativeOnlyFilter").checked;
+        document.getElementById("negativeOnlyFilter").addEventListener("change", renderTable);
+        document.getElementById("exportCsvBtn").addEventListener("click", () => { alert("CSV exportado (demo)"); });
+        document.getElementById("proModeBtn").addEventListener("click", () => { alert("Modo Pro em breve"); });
+        document.getElementById("closeModalBtn").addEventListener("click", () => { document.getElementById("protocolModal").classList.add("hidden"); });
+        
+        setInterval(() => {
+            allData = generateData();
             renderTable();
-        }
-        
-        function updateSort() {
-            currentSort = document.getElementById("sortBy").value;
-            renderTable();
-        }
-        
-        // Export CSV
-        function exportCSV() {
-            const data = applyFiltersAndSort();
-            const headers = ["Protocolo","Rede","Stablecoin","Borrow APY","Reward APY","Net Borrow APY","UtilizaÃ§Ã£o","Liquidez","Risk Score","Ãšltima AtualizaÃ§Ã£o"];
-            const rows = data.map(opp => [
-                opp.protocol, opp.network, opp.stablecoin, opp.borrowApy, opp.rewardApy, opp.netBorrowApy,
-                opp.utilization, opp.liquidity, opp.riskScore, opp.lastUpdate
-            ]);
-            let csvContent = headers.join(",") + "\n" + rows.map(row => row.map(cell => `"${cell}"`).join(",")).join("\n");
-            const blob = new Blob([csvContent], {type: "text/csv"});
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = `stableyield_${new Date().toISOString()}.csv`;
-            link.click();
-            URL.revokeObjectURL(link.href);
-            showToast("CSV exportado com sucesso!", "info");
-        }
-        
-        // InicializaÃ§Ã£o e timers
-        function init() {
-            allOpportunities = generateMockData();
-            previousNegativeSet = new Set(allOpportunities.filter(o => o.netBorrowApy < 0).map(o => `${o.protocol}-${o.network}-${o.stablecoin}`));
-            renderTable();
-            document.getElementById("lastGlobalUpdate").innerText = `Ãšltima atualizaÃ§Ã£o: ${new Date().toLocaleTimeString()}`;
-            setInterval(() => { mutateData(); }, 30000);
-            document.getElementById("filterNetwork").addEventListener("change", updateFilters);
-            document.getElementById("filterStablecoin").addEventListener("change", updateFilters);
-            document.getElementById("negativeOnlyFilter").addEventListener("change", updateFilters);
-            document.getElementById("sortBy").addEventListener("change", updateSort);
-            document.getElementById("exportCsvBtn").addEventListener("click", exportCSV);
-            document.getElementById("refreshNowBtn").addEventListener("click", () => { mutateData(); showToast("Dados atualizados manualmente", "info"); });
-            document.getElementById("closeModalBtn").addEventListener("click", () => {
-                document.getElementById("protocolModal").classList.add("hidden");
-                document.getElementById("protocolModal").classList.remove("flex");
-            });
-            document.getElementById("proModeBtn").addEventListener("click", () => {
-                showToast("âš¡ Modo Pro: Alertas Telegram & histÃ³rico 30 dias (em breve disponÃ­vel)", "info");
-            });
-            // notificaÃ§Ãµes
-            if(Notification.permission !== "granted" && Notification.permission !== "denied") {
-                Notification.requestPermission();
-            }
-        }
-        init();
+        }, 30000);
     </script>
 </body>
 </html>
